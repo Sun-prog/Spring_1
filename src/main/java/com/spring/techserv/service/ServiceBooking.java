@@ -10,6 +10,7 @@ import com.spring.techserv.mapper.BookingMapper;
 import com.spring.techserv.repository.BookingRepository;
 import com.spring.techserv.repository.ServiceRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 @Service
@@ -65,6 +67,18 @@ public class ServiceBooking {
     }
 
 
+    public Long updateBooking(@Positive Long idBooking, @Valid BookingRequestDTO bookingRequest) {
+        TechService techService = serviceRepository.findById(bookingRequest.idService())
+                .orElseThrow(() -> new BookingException(HttpStatus.BAD_REQUEST, "Указанная услуга не существует"));
+        Booking bookingDB = bookingRepository.findById(idBooking)
+                .orElseThrow(() -> new BookingException(HttpStatus.BAD_REQUEST, "Указанная бронь не существует"));
+        Booking bookingUpdate = bookingMapper.mapToEntity(bookingRequest);
+        bookingDB.setTechService(techService);
 
-
+        if (Objects.nonNull(bookingUpdate.getTime())) {
+            bookingDB.setTime(bookingUpdate.getTime());
+        }
+        bookingRepository.save(bookingDB);
+        return bookingDB.getIdBooking();
+    }
 }

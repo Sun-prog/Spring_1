@@ -90,7 +90,8 @@ public class BookingController {
             LocalDateTime time) {
             return serviceBooking.findByTime(time);
     }
-    // Получение списка брони
+
+    // Получение выручки за период
     @GetMapping(path = "/costByPeriod", produces = "application/json")
     public ResponseEntity<HashMap<LocalDate, BigDecimal>> getBookingByPeriod(
             @RequestParam("timeStart")
@@ -99,6 +100,18 @@ public class BookingController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime timeStop ){
         //log.info("GET request with animal type = {}", type);
             return new ResponseEntity<>(serviceBooking.findCostByPeriod(timeStart,timeStop), HttpStatus.OK);
+    }
+
+    //Редактирование брони любого пользователя.
+    @PostMapping("/{id}")
+    public Long editBooking(
+            @Positive
+            @PathVariable
+                    ("id") long idBooking,
+            @Valid @RequestBody BookingRequestDTO bookingRequest){
+          serviceBooking.updateBooking(
+                 idBooking, bookingRequest);
+        return idBooking;
     }
 
 }
