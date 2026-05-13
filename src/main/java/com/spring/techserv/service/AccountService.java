@@ -2,12 +2,17 @@ package com.spring.techserv.service;
 
 
 import com.nimbusds.jose.JOSEException;
+import com.spring.techserv.dto.AccountRequestDTO;
 import com.spring.techserv.entity.ApplicationUser;
+import com.spring.techserv.entity.Booking;
 import com.spring.techserv.entity.Token;
 import com.spring.techserv.entity.UserRole;
 import com.spring.techserv.exception.AccountException;
+import com.spring.techserv.mapper.BookingMapper;
+import com.spring.techserv.mapper.UserMapper;
 import com.spring.techserv.repository.ApplicationUserRepository;
 import com.spring.techserv.repository.UserRoleRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,6 +27,7 @@ public class AccountService {
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final UserMapper userMapper ;
 
     public AccountService(ApplicationUserRepository applicationUserRepository,
                           UserRoleRepository userRoleRepository,
@@ -31,37 +37,43 @@ public class AccountService {
         this.userRoleRepository = userRoleRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
+        this.userMapper =  new UserMapper();
     }
 
-    public void registration(ApplicationUser user) throws AccountException {
+    public void registration(AccountRequestDTO accountRequestDTO) throws AccountException {
+        ApplicationUser user = userMapper.mapToEntity(accountRequestDTO);
         if (applicationUserRepository.existsByUsername(user.getUsername())) {
             throw new AccountException("Username is already taken");
         }
         userRoleRepository.findByRoleType(UserRole.RoleType.ROLE_USER)
-                .ifPresentOrElse(user::setUserRole,
+                .ifPresentOrElse(user::setRole,
                         () -> {
                             UserRole userRole = new UserRole();
                             userRole.setRoleType(UserRole.RoleType.ROLE_USER);
-                            user.setUserRole(userRole);
+                            user.setRole(userRole);
                             userRoleRepository.save(userRole);
+                            System.out.println("назначили роль"+userRole.getRoleType().name());
                         }
                 );
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setPassword(user.getPassword());
+       // user.setPassword(passwordEncoder.encode(user.getPassword()));
         applicationUserRepository.save(user);
+        //return user.getId();
     }
 
     public void registrationOperator(ApplicationUser user) throws AccountException {
 
         userRoleRepository.findByRoleType(UserRole.RoleType.ROLE_OPERATOR)
-                .ifPresentOrElse(user::setUserRole,
+                .ifPresentOrElse(user::setRole,
                         () -> {
                             UserRole userRole = new UserRole();
                             userRole.setRoleType(UserRole.RoleType.ROLE_OPERATOR);
-                            user.setUserRole(userRole);
+                            user.setRole(userRole);
                             userRoleRepository.save(userRole);
                         }
                 );
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setPassword(user.getPassword());
+        // user.setPassword(passwordEncoder.encode(user.getPassword()));
         applicationUserRepository.save(user);
     }
 

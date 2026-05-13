@@ -86,18 +86,6 @@
 			<version>6.2.2</version>
 		</dependency>
 
-		<!-- генерация html -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-thymeleaf</artifactId>
-		</dependency>
-
-		<!-- связь starter-security и starter-thymeleaf -->
-		<dependency>
-			<groupId>org.thymeleaf.extras</groupId>
-			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
-		</dependency>
-
 
 
     </dependencies>
