@@ -7,15 +7,15 @@ import com.spring.techserv.dto.BookingResponseDTO;
 import com.spring.techserv.dto.ServiceRequestDTO;
 import com.spring.techserv.service.ServiceBooking;
 import com.spring.techserv.service.ServiceTechServ;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.Past;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,6 +35,8 @@ public class BookingController {
 
     //Создание брони
     //{"idService": 1, "time" : "2027-01-19T15:10:06.780         "}
+    @PreAuthorize("hasRole('OPERATOR')")
+    @Operation(summary = "Доступен только авторизованным пользователям с ролью OPERATOR")
     @PostMapping
     public ResponseEntity<?>  createBooking(@Valid @RequestBody BookingRequestDTO bookingRequest){
         URI uri = URI.create("/api/v1/booking?id=" +
@@ -103,6 +105,8 @@ public class BookingController {
     }
 
     //Редактирование брони любого пользователя.
+    @PreAuthorize("hasRole('OPERATOR')")
+    @Operation(summary = "Доступен только авторизованным пользователям с ролью OPERATOR")
     @PostMapping("/{id}")
     public Long editBooking(
             @Positive
@@ -113,6 +117,26 @@ public class BookingController {
                  idBooking, bookingRequest);
         return idBooking;
     }
+
+    //назначать/убирать скидку для всю бронь
+    //для назначения скидки нужно передать в процент скидки положительное число, для отмены скидки - отрицательное
+
+    @Operation(summary = "Доступен только авторизованным пользователям с ролью ADMIN")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/sale")
+    public Long setSaleBooking(
+            @RequestParam("discountPercentage")
+            @DecimalMax(value = "100", inclusive = false, message = "Скидка должна быть  меньше 100%")
+            @DecimalMin(value = "-100", inclusive = false, message = "Скидка должна быть больше -100.00")
+            BigDecimal discountPercentage,
+            @RequestParam("idBooking")
+            @Positive
+            long idBooking) {
+        serviceBooking.setSaleBooking(
+                idBooking, discountPercentage);
+        return idBooking;
+    }
+
 
 }
 

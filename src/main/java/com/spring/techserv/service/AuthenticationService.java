@@ -1,8 +1,8 @@
 package com.spring.techserv.service;
 
 import com.spring.techserv.dto.JwtAuthenticationResponse;
-import com.spring.techserv.dto.SignInRequest;
-import com.spring.techserv.dto.SignUpRequest;
+import com.spring.techserv.dto.SignInRequestDTO;
+import com.spring.techserv.dto.SignUpRequestDTO;
 import com.spring.techserv.constants.Role;
 
 import com.spring.techserv.entity.User;
@@ -28,7 +28,7 @@ public class AuthenticationService {
      * @param request данные пользователя
      * @return токен
      */
-    public JwtAuthenticationResponse signUp(SignUpRequest request) {
+    public JwtAuthenticationResponse signUp(SignUpRequestDTO request) {
 
         var user = User.builder()
                 .username(request.getUsername())
@@ -49,7 +49,7 @@ public class AuthenticationService {
      * @param request данные пользователя
      * @return токен
      */
-    public JwtAuthenticationResponse signIn(SignInRequest request) {
+    public JwtAuthenticationResponse signIn(SignInRequestDTO request) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 request.getUsername(),
                 request.getPassword()
@@ -62,4 +62,20 @@ public class AuthenticationService {
         var jwt = jwtService.generateToken(user);
         return new JwtAuthenticationResponse(jwt);
     }
+
+    public JwtAuthenticationResponse signUpOperator(SignUpRequestDTO request) {
+
+        var user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.ROLE_OPERATOR)
+                .build();
+
+        userService.create(user);
+
+        var jwt = jwtService.generateToken(user);
+        return new JwtAuthenticationResponse(jwt);
+    }
+
 }

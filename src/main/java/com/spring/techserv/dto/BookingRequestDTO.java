@@ -15,10 +15,9 @@ public record BookingRequestDTO(
     @Positive
     long idService,
 
+    @NotNull
+    String username,
 
-    //@JsonDeserialize(using = LocalDateTimeDeserializer.class)
-    //@JsonSerialize(using = LocalDateTimeSerializer.class)
-   // @JsonFormat(pattern = "yyyy-MM-dd", shape = JsonFormat.Shape.STRING)
     @NotNull
     @Future
     LocalDateTime time

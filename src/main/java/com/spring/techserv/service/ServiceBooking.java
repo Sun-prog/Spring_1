@@ -5,11 +5,13 @@ import com.spring.techserv.dto.BookingRequestDTO;
 import com.spring.techserv.dto.BookingResponseDTO;
 import com.spring.techserv.entity.Booking;
 import com.spring.techserv.entity.TechService;
+import com.spring.techserv.entity.User;
 import com.spring.techserv.exception.BookingException;
 import com.spring.techserv.mapper.BookingMapper;
 import com.spring.techserv.repository.BookingRepository;
 import com.spring.techserv.repository.ServiceRepository;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,13 +32,15 @@ public class ServiceBooking {
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
     private final ServiceRepository serviceRepository;
+    private final UserService userService;
 
     public Long registerBooking(@Valid BookingRequestDTO bookingRequest) {
 
         TechService techService = serviceRepository.findById(bookingRequest.idService())
                 .orElseThrow(() -> new BookingException(HttpStatus.BAD_REQUEST, "Указанная услуга не существует"));
-
+        User user = userService.getByUsername(bookingRequest.username());
         Booking booking = bookingMapper.mapToEntity(bookingRequest);
+        booking.setUser(user);
         booking.setTechService(techService);
         booking.setFixedCost(techService.getCost());
         bookingRepository.save(booking);
@@ -70,15 +74,36 @@ public class ServiceBooking {
     public Long updateBooking(@Positive Long idBooking, @Valid BookingRequestDTO bookingRequest) {
         TechService techService = serviceRepository.findById(bookingRequest.idService())
                 .orElseThrow(() -> new BookingException(HttpStatus.BAD_REQUEST, "Указанная услуга не существует"));
+        System.out.println("тех сервис нашли");
         Booking bookingDB = bookingRepository.findById(idBooking)
                 .orElseThrow(() -> new BookingException(HttpStatus.BAD_REQUEST, "Указанная бронь не существует"));
+        System.out.println("заказ нашли");
+
+        User user = userService.getByUsername(bookingRequest.username());
+        System.out.println("пользователя нашли");
         Booking bookingUpdate = bookingMapper.mapToEntity(bookingRequest);
         bookingDB.setTechService(techService);
+        bookingDB.setUser(user);
 
         if (Objects.nonNull(bookingUpdate.getTime())) {
             bookingDB.setTime(bookingUpdate.getTime());
+            System.out.println("время изменили");
         }
         bookingRepository.save(bookingDB);
         return bookingDB.getIdBooking();
+    }
+
+    public Long setSaleBooking(@Positive long idBooking, @Positive @DecimalMax(value = "100", inclusive = false, message = "Скидка должна быть  меньше 100%") BigDecimal discountPercentage) {
+        Booking bookingDB = bookingRepository.findById(idBooking)
+                .orElseThrow(() -> new BookingException(HttpStatus.BAD_REQUEST, "Указанная бронь не существует"));
+        System.out.println("заказ нашли");
+        BigDecimal newCost = BigDecimal.valueOf(100)
+                .subtract(discountPercentage)
+                .multiply(bookingDB.getFixedCost())
+                .divide(BigDecimal.valueOf(100));
+        bookingDB.setFixedCost(newCost);
+        bookingRepository.save(bookingDB);
+        return bookingDB.getIdBooking();
+
     }
 }

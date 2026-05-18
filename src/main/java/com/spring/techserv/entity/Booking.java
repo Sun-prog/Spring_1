@@ -24,8 +24,12 @@ public class Booking {
     private long idBooking;
 
     @ManyToOne
-    @JoinColumn(name = "id",nullable = false)
+    @JoinColumn(name = "idService",nullable = false)
     private TechService techService;
+
+    @ManyToOne
+    @JoinColumn(name = "nameUser",nullable = false)
+    private User user;
 
     @Column(name = "time")
     private LocalDateTime time;
