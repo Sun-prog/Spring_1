@@ -35,7 +35,7 @@ public class BookingController {
 
     //Создание брони
     //{"idService": 1, "time" : "2027-01-19T15:10:06.780         "}
-    @PreAuthorize("hasRole('OPERATOR')")
+  //  @PreAuthorize("hasRole('OPERATOR')")
     @Operation(summary = "Доступен только авторизованным пользователям с ролью OPERATOR")
     @PostMapping
     public ResponseEntity<?>  createBooking(@Valid @RequestBody BookingRequestDTO bookingRequest){
@@ -105,8 +105,8 @@ public class BookingController {
     }
 
     //Редактирование брони любого пользователя.
-    @PreAuthorize("hasRole('OPERATOR')")
-    @Operation(summary = "Доступен только авторизованным пользователям с ролью OPERATOR")
+  //  @PreAuthorize("hasRole('OPERATOR')")
+ //   @Operation(summary = "Доступен только авторизованным пользователям с ролью OPERATOR")
     @PostMapping("/{id}")
     public Long editBooking(
             @Positive
@@ -115,6 +115,16 @@ public class BookingController {
             @Valid @RequestBody BookingRequestDTO bookingRequest){
           serviceBooking.updateBooking(
                  idBooking, bookingRequest);
+        return idBooking;
+    }
+
+    @PostMapping("/cancel-{id}")
+    public Long cancelBooking(
+            @Positive
+            @PathVariable
+                    ("id") long idBooking){
+        serviceBooking.cancelBooking(
+                idBooking);
         return idBooking;
     }
 

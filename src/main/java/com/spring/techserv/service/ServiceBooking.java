@@ -1,5 +1,8 @@
 package com.spring.techserv.service;
 
+import com.spring.techserv.constants.BookingStatus;
+import com.spring.techserv.constants.Role;
+import com.spring.techserv.dto.AdvNotification;
 import com.spring.techserv.dto.BookingCostResponseDTO;
 import com.spring.techserv.dto.BookingRequestDTO;
 import com.spring.techserv.dto.BookingResponseDTO;
@@ -33,6 +36,7 @@ public class ServiceBooking {
     private final BookingMapper bookingMapper;
     private final ServiceRepository serviceRepository;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     public Long registerBooking(@Valid BookingRequestDTO bookingRequest) {
 
@@ -84,12 +88,19 @@ public class ServiceBooking {
         Booking bookingUpdate = bookingMapper.mapToEntity(bookingRequest);
         bookingDB.setTechService(techService);
         bookingDB.setUser(user);
+        bookingDB.setFixedCost(techService.getCost());
 
         if (Objects.nonNull(bookingUpdate.getTime())) {
             bookingDB.setTime(bookingUpdate.getTime());
             System.out.println("время изменили");
         }
+        String messageText="Здравствуйте,"+ user.getUsername()+
+                ".\n  Данные заказа изменены. \n Актуальные данные о бронировании:.\n  Тип услуги: "+
+                bookingDB.getTechService().getTitle() +"\n Стоимость: "+bookingDB.getFixedCost()
+                +" руб. \n Время: "+bookingDB.getTime();
         bookingRepository.save(bookingDB);
+        AdvNotification advNotification = new AdvNotification(messageText,user);
+        notificationService.sendNotification(advNotification, user);
         return bookingDB.getIdBooking();
     }
 
@@ -105,5 +116,22 @@ public class ServiceBooking {
         bookingRepository.save(bookingDB);
         return bookingDB.getIdBooking();
 
+    }
+
+    public Long cancelBooking(@Positive long idBooking) {
+        Booking bookingDB = bookingRepository.findById(idBooking)
+                .orElseThrow(() -> new BookingException(HttpStatus.BAD_REQUEST, "Указанная бронь не существует"));
+        System.out.println("заказ нашли, отмена выполняется пользователем с ролью "+userService.getCurrentUser().getRole());
+        bookingDB.setBookingStatus(BookingStatus.CANCELLED);
+        User user = bookingDB.getUser();
+        if(userService.getCurrentUser().getRole()!= Role.ROLE_USER){
+            String messageText="Здравствуйте,"+ user.getUsername()+
+                    ".\n  Ваш заказ отменен. \n Приносим извинения и дарим скидку на следующее бронирование в размере 1%";
+            bookingRepository.save(bookingDB);
+            notificationService.sendNotification(new AdvNotification(messageText,user), user);
+        }
+
+        bookingRepository.save(bookingDB);
+        return bookingDB.getIdBooking();
     }
 }

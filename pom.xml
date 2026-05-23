@@ -47,6 +47,14 @@
 			<scope>compile</scope>
 		</dependency>
 
+		<!-- Отправка писем -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+			<version>4.1.0-RC1</version>
+			<scope>compile</scope>
+		</dependency>
+
 		<!-- Утилиты -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
