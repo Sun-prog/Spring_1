@@ -79,9 +79,13 @@ public class BookingController {
     //Получение списка завершенных броней (предотавленные услуги)
     @GetMapping("/complited")
     public List<BookingResponseDTO> getComplitedBookings() {
-        //log.info("GET request with anim
-        // al type = {}", type);
         return null;
+    }
+
+    //Получение списка активных броней (предотавленные услуги)
+    @GetMapping("/active")
+    public List<BookingResponseDTO> getActiveBookings() {
+        return serviceBooking.findActiveBooking();
     }
 
     //Получение брони по дате времени

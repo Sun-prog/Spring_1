@@ -22,4 +22,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByFilter(LocalDateTime ageFrom,
                               LocalDateTime ageTo
                               );
+
+    @Query(nativeQuery = true,
+            value = "SELECT * FROM bookings u " +
+                    "WHERE  ( u.status = \'ACTIVE\')")
+    List<Booking> findActiveBooking();
 }

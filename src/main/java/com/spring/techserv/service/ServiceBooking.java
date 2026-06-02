@@ -2,6 +2,7 @@ package com.spring.techserv.service;
 
 import com.spring.techserv.constants.BookingStatus;
 import com.spring.techserv.constants.Role;
+import com.spring.techserv.dataClient.DataClient;
 import com.spring.techserv.dto.AdvNotification;
 import com.spring.techserv.dto.BookingCostResponseDTO;
 import com.spring.techserv.dto.BookingRequestDTO;
@@ -18,6 +19,9 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,9 +31,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
 @Service
+@EnableScheduling
 public class ServiceBooking {
 
     private final BookingRepository bookingRepository;
@@ -37,6 +43,7 @@ public class ServiceBooking {
     private final ServiceRepository serviceRepository;
     private final UserService userService;
     private final NotificationService notificationService;
+    private final DataClient dataClient;
 
     public Long registerBooking(@Valid BookingRequestDTO bookingRequest) {
 
@@ -56,6 +63,22 @@ public class ServiceBooking {
                 .orElseThrow(() -> new BookingException(HttpStatus.BAD_REQUEST, "брони с указанной датой нет"));
         bookingMapper.entityToMap(booking);
         return bookingMapper.entityToMap(booking);
+    }
+
+
+    @Async("address-service") // задачи будут выполняться отдельным пулом
+    @Scheduled(fixedRate = 15, timeUnit = TimeUnit.SECONDS)
+    public List<BookingResponseDTO> findActiveBooking() {
+        List<Booking> bookings  = bookingRepository.findActiveBooking();
+        if (bookings.isEmpty()) throw new BookingException(HttpStatus.NOT_FOUND, "Записи не найдены");
+        List<BookingResponseDTO> bookingResponseDTOList = bookings.stream().map(bookingMapper::entityToMap).toList();
+sendRequest(bookingResponseDTOList);
+        return bookingResponseDTOList;
+    }
+    public void sendRequest(List<BookingResponseDTO> bookingResponseDTO) {
+        List<Integer> processBooking = dataClient.processBooking(bookingResponseDTO);
+       System.out.println(" hjh"+processBooking);
+
     }
 
     public HashMap<LocalDate, BigDecimal> findCostByPeriod(LocalDateTime timeStart,LocalDateTime timeEnd) {
