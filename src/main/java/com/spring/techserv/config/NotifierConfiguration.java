@@ -1,5 +1,7 @@
 package com.spring.techserv.config;
 
+import com.spring.techserv.dataClient.CustomRetryer;
+import feign.Retryer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -19,6 +21,10 @@ public class NotifierConfiguration {
         executor.setThreadNamePrefix("NOTIFIER-EXECUTOR-");
         executor.initialize();
         return executor;
+    }
+    @Bean
+    public Retryer customRetryer() {
+        return new CustomRetryer();
     }
 
 }

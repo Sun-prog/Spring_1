@@ -14,6 +14,7 @@ import com.spring.techserv.exception.BookingException;
 import com.spring.techserv.mapper.BookingMapper;
 import com.spring.techserv.repository.BookingRepository;
 import com.spring.techserv.repository.ServiceRepository;
+import feign.FeignException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Positive;
@@ -72,12 +73,22 @@ public class ServiceBooking {
         List<Booking> bookings  = bookingRepository.findActiveBooking();
         if (bookings.isEmpty()) throw new BookingException(HttpStatus.NOT_FOUND, "Записи не найдены");
         List<BookingResponseDTO> bookingResponseDTOList = bookings.stream().map(bookingMapper::entityToMap).toList();
-sendRequest(bookingResponseDTOList);
+        sendRequest(bookingResponseDTOList);
         return bookingResponseDTOList;
     }
+
     public void sendRequest(List<BookingResponseDTO> bookingResponseDTO) {
-        List<Integer> processBooking = dataClient.processBooking(bookingResponseDTO);
-       System.out.println(" hjh"+processBooking);
+        List<Integer> processBooking = null;
+        try {
+            processBooking = dataClient.processBooking(bookingResponseDTO);
+            Exception a = new Exception("empty list");
+           // if(processBooking.isEmpty()){throw new FeignException(200,"пустой список",a);}
+        } catch (FeignException e) {
+            System.out.println(" ///FeignException");
+        }catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println(" hjh"+processBooking);
 
     }
 
@@ -153,7 +164,6 @@ sendRequest(bookingResponseDTOList);
             bookingRepository.save(bookingDB);
             notificationService.sendNotification(new AdvNotification(messageText,user), user);
         }
-
         bookingRepository.save(bookingDB);
         return bookingDB.getIdBooking();
     }
